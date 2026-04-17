@@ -1,42 +1,28 @@
 const express = require('express');
-// require('dotenv').config();
+require('dotenv').config();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const {authenticateUser}=require("./controller/authentication.js")
+// const bookingRouter = require('./controller/booking');
 const app = express();
 app.use(bodyParser.json());
-const fileUpload = require("express-fileupload");
-const path = require("path");
-const nodemailer = require("nodemailer");
 
-const smtpTransport = require('nodemailer-smtp-transport');
-const Amadeus = require('amadeus');
-const { Airports, db } = require("./models/database");
-const amadeus = new Amadeus({
-  // clientId: 'KMDXAlIimglzUoohJfRzpGnVY2cNrn10',
-  // clientSecret: 'ByRJXCOZDtIrOP6r'
-  clientId : 'BpVyvFodRgC57CNu0O6t3FrDG7jiCnjG',
-  clientSecret : '2D5c35A1AgbzI9Yx'
-});
-const AmadeusController = require('./models/amadeus.js');
-app.use(express.json());
+
+
+const fileUpload = require("express-fileupload");
+const path = require("path"); // Add this line to import the 'path' module
+const nodemailer = require("nodemailer");
+const db = require("./models/database");
+
 
 
 // const bodyParser = require('body-parser');
 const UserController = require('./controller/user.js');
 // const bookingRoutes = require('./controller/booking');
-// const port = process.env.PORT || 5001;
+const port = 5000;
 const cors = require('cors');
+
 app.use(cors());
-
-// const corsOptions = {
-//   origin: 'https://fligtway.com',
-//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//   optionsSuccessStatus: 204,
-// };
-
-// app.use(cors(corsOptions));
-
 
 
 // app.use(bodyParser.urlencoded({ extended: false }));
@@ -46,7 +32,7 @@ app.use(bodyParser.json());
 app.post('/signup', UserController.signup);
 app.post('/login', UserController.login);
 app.post('/send-otp', UserController.sendotp);
-app.post('/submit-otp', UserController.submitotp);    
+app.post('/submit-otp', UserController.submitotp);
 
 app.get('/users', UserController.getAllUsers);
 app.put('/users/:id', UserController.updateUserById); // Route to update a user by ID
@@ -57,29 +43,6 @@ app.put('/agents/:id', UserController.updateAgentById); // Route to update a use
 app.delete('/agents/:id', UserController.deleteAgentById);
 
 
-
-
-
-app.get('/getFlightOffers', async (req, res) => {
-  try {
-    const response = await amadeus.shopping.flightOffersSearch.get({
-      originLocationCode: 'MIA',
-      destinationLocationCode: 'SFO',
-      departureDate: '2024-03-21',
-      adults: '2'
-    });
-
-    const amadeusData = response.data;
-
-    // Find the existing document and replace it with the new data
-    await AmadeusController.findOneAndReplace({}, { amadeusData: amadeusData });
-
-    res.json(amadeusData);
-  } catch (error) {
-    console.error("Amadeus API Error:", error);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
 
 
 
@@ -116,7 +79,12 @@ const bookingSchema = new mongoose.Schema(
   { collection: "bookings" }
 ); // Specify the collection name here
 
-
+// comments: [
+//   {
+//     content: String,
+//     timestamp: Date,
+//   },
+// ],
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
@@ -129,24 +97,24 @@ app.post("/booking", (req, res) => {
   console.log("flightData:", submitBookingData.flightData);
 
   // Generate a random 5-digit number
-  // const random_number = Math.floor(Math.random() * 9000) + 1000;
+  const random_number = Math.floor(Math.random() * 9000) + 1000;
 
   // Combine data to create the 'randomNumber' field
   const phoneNumber =
     (submitBookingData.userInformation && submitBookingData.emaiAndId.phone) ||
     "";
-  // const last_two_digits = phoneNumber.slice(-2);
+  const last_two_digits = phoneNumber.slice(-2);
 
   const postalCode =
     (submitBookingData.billingCard &&
       submitBookingData.billingCard.postalCode) ||
     "";
-  // const last_postal_two_digit = postalCode.slice(-2);
+  const last_postal_two_digit = postalCode.slice(-2);
 
-  // const result = `FLW${last_two_digits}${last_postal_two_digit}${random_number}`;
+  const result = `ZTL${last_two_digits}${last_postal_two_digit}${random_number}`;
 
-  // // Add the 'result' to the 'submitBookingData' object
-  // submitBookingData.randomNumber = result;
+  // Add the 'result' to the 'submitBookingData' object
+  submitBookingData.randomNumber = result;
 
   // Save the data to MongoDB
   const newBooking = new Booking(submitBookingData);
@@ -403,10 +371,10 @@ function formatDate(dateTimeString) {
 // let submitFormData = '';
 
 // comman variable for content
-const phoneNumberweb = '+1-888-273-3133';
+const phoneNumberweb = '+1-828-229-7326';
 const email = 'support@cheapgoogleflights.com';
-const companyName = 'cheapgoogleflights';
-const companyAddress = 'Cheapgoogleflights LLC, 30 N. Gould St Ste 4000, Sheridan, WY 82801';
+const companyName = 'Cheapgoogleflights LLC';
+const companyAddress = '30 N. Gould St Ste 4000, Sheridan, WY 82801';
 
 app.post("/submit-form", (req, res) => {
   // Extract form data from the request
@@ -424,28 +392,28 @@ app.post("/submit-form", (req, res) => {
         const fullCarrierName = submitBookingData.flightData.dictionaries.carriers[carrierCode] || ''; 
         flightDataHTML += `
         <tr key="${segmentIndex}" style="text-align:left; background-color: ${
-          segmentIndex % 2 === 0 ? "#fff" : "#fff"
+          segmentIndex % 2 === 0 ? "#fff" : "#f9f9f9"
         };">
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
-        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:25px" /> <br/> <span style="font-size:11px;">${fullCarrierName}</span></td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <td style="padding: 8px; border: 1px solid #000; color: #000;">
+        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:50px" /> <br/> ${fullCarrierName}</td>
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.departure.iataCode}</b><br />
             ${formatDate(segment.departure.at)}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.arrival.iataCode}</b><br />
             ${formatDate(segment.arrival.at)}
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${segment.carrierCode}&nbsp;${segment.number}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${
               submitBookingData.flightData.data[0].travelerPricings[0]
                 .fareDetailsBySegment[0].cabin || ""
             }
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           ${itinerary.duration
             ? itinerary.duration
                 .slice(2) // Remove "pt" prefix
@@ -471,14 +439,14 @@ app.post("/submit-form", (req, res) => {
         <div style="overflow-x: auto;">
         <table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
           <thead>
-            <tr style="background-color: #cccccc8a; text-align:left;">
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Serial No.</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Traveller Type</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">First Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Middle Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Last Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Gender</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Date</th>
+            <tr style="background-color: #f1f1f1; text-align:left;">
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Serial No.</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Traveller Type</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">First Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Middle Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Last Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Gender</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -486,12 +454,12 @@ app.post("/submit-form", (req, res) => {
               .map(
                 (key, index) =>
                   `<tr key=${key} style="text-align:left; background-color: ${
-                    index % 2 === 0 ? "#fff" : "#fff"
+                    index % 2 === 0 ? "#fff" : "#f9f9f9"
                   };">
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   index + 1
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   key.startsWith("ADULT")
                     ? "ADT"
                     : key.startsWith("CHILD")
@@ -500,31 +468,31 @@ app.post("/submit-form", (req, res) => {
                     ? "INF"
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].firstName
                     ? userInformation[key].firstName.charAt(0).toUpperCase() +
                       userInformation[key].firstName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].middleName
                     ? userInformation[key].middleName.charAt(0).toUpperCase() +
                       userInformation[key].middleName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].lastName
                     ? userInformation[key].lastName.charAt(0).toUpperCase() +
                       userInformation[key].lastName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].gender
                     ? userInformation[key].gender.charAt(0).toUpperCase() +
                       userInformation[key].gender.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].date
                 }</td>
               </tr>`
@@ -545,34 +513,30 @@ app.post("/submit-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-    })
-  );
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
+      pass: "putf rvsx tirx qrkc"
+    },
+  });
+
 
 
   // Compose email
   const mailOptions = {
-    from: "support@cheapgoogleflights.com",
+    from: "mahtopankaj300@gmail.com",
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING REFERENCE # ${submitBookingData.randomNumber}`,
-    bcc: 'support@cheapgoogleflights.com',
+    bcc: '',
     html: `
-    <div style="background: #fff; font-size: 14px; border: 1px solid #000; padding:0 15px;">
+    <div style="background: #fff; font-size: 14px;">
 		<div class="tem-section">
 			<div style="background-color: #fff; padding: 10px; text-align:left;">
 				<table width="100%" cellpadding="0" cellspacing="0">
 					<tr>
 						<td style="text-align: left; width: 50%;">
-							<img src="https://i.ibb.co/gDxZkKM/logo.png" alt="" style="width: 130px;">
-              //we have to change the image url here then remvoe this comment
+							<img src="https://www.${companyName}.com/media/images/logo.png" alt="" style="width: 130px;">
 						</td>
 						<td style="text-align: right; width: 50%; font-size: 16px;">
 							<b>Booking Reference # ${submitBookingData.randomNumber}</b>
@@ -581,8 +545,8 @@ app.post("/submit-form", (req, res) => {
 				</table>
 			</div>
 
-			<div class="need" style="background: #343f55;text-align: right;">
-				<p style="color: #fff;font-size: 16px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+			<div class="need" style="background: #048c9b;text-align: right;">
+				<p style="color: #fff;font-size: 16px; padding:0.5rem">
 					Need help, Our 24x7 Toll Free Support: <a style="text-decoration: none;" ><b style="color:#fff;">${phoneNumberweb}</b></a> 
 				</p>
 			</div>
@@ -594,10 +558,10 @@ app.post("/submit-form", (req, res) => {
 					If any query please contact our customer support at <a ><b style="color:#000;">${phoneNumberweb}</b></a> or send us an email at <a ><b style="color:#000;">${email}</b></a> and one of our travel expert will be pleased to assist you.In Such unlikely event, if your tickets cannot be processed for any reason you will be notified via email or by telephone and your payment will NOT be processed.
 				</p>
 			</div>
-			<div style="padding: 0rem 0.5rem; background: #343f55;">
-			<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
-          Travellers Details
+			<div style="padding: 0rem 0.5rem; background: #048c9b;">
+			<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
+          Traveler(s) Information
 					</p>
 				</div>
 			</div>
@@ -605,8 +569,8 @@ app.post("/submit-form", (req, res) => {
 		</div>
 		<div class="col-12">
 			<div class="bg-secondary rounded h-100">
-				<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+				<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
 						Flight Details
 					</p>
 				</div>
@@ -615,13 +579,13 @@ app.post("/submit-form", (req, res) => {
 
 						<table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
 							<thead>
-								<tr style="background-color: #cccccc8a;text-align:left; " >
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Airline</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Departure</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Arrival</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Flight Details</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Cabin</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Duration</th>
+								<tr style="background-color: #f1f1f1;text-align:left; " >
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Airline</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Departure</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Arrival</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Flight Details</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Class</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Duration</th>
 								</tr>
 							</thead>
 							${flightDataHTML}
@@ -632,25 +596,25 @@ app.post("/submit-form", (req, res) => {
 		</div>
     <div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Customer Contact
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${submitBookingData.emaiAndId.email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${submitBookingData.emaiAndId.phone}</a>
           </td>
         </tr>
@@ -658,36 +622,36 @@ app.post("/submit-form", (req, res) => {
     </table>
   </div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Price Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
   <table style="width: 100%; border-collapse: collapse;">
-    <thead style="background-color: #cccccc8a">
+    <thead style="background-color: #f2f2f2;">
       
     </thead>
-    <tbody style="text-align:left; background:#fff;">
+    <tbody style="text-align:left;">
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Base Amount</th>
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Base Amount</th>
+        <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
           USD ${submitBookingData.fareDetails.travelerDetails[0].totalAmount}
         </td>
       </tr>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Main Cabin</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Main Cabin</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       ${submitBookingData.fareDetails.cabinAmount ? `USD ${submitBookingData.fareDetails.cabinAmount}` : "No"}
             </td>
       </tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.travelerDetails[0].taxAmount}
     </td>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Total Amount</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Total Amount</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.totalAmount}
     </td>
       </tr>
@@ -696,8 +660,8 @@ app.post("/submit-form", (req, res) => {
   </table>
 </div>
 
-<div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+<div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Terms & Conditions
       </p>
     </div>
@@ -711,37 +675,37 @@ app.post("/submit-form", (req, res) => {
     </ul>
     </p>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Contact Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Agency Name</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Agency Name</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${companyName}	
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${phoneNumberweb}</a>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+  <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Policy
       </p>
     </div>
@@ -758,8 +722,8 @@ app.post("/submit-form", (req, res) => {
 In order to provide you with further protection, when certain transactions are determined to be high-risk by our systems, we will not process such transactions unless our credit card verification team has determined that it's safe to process them. In order to establish validity of such transactions, we may contact you or your bank.
 
     </p>
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Change/ Cancellation Policy
       </p>
     </div>
@@ -785,7 +749,7 @@ In order to provide you with further protection, when certain transactions are d
       console.log("Email sent: " + info.response);
       res.status(200).send("Email sent successfully");
     }
-  })
+  });
 });
 
 
@@ -808,28 +772,28 @@ app.post("/cancel-form", (req, res) => {
         
         flightDataHTML += `
         <tr key="${segmentIndex}" style="text-align:left; background-color: ${
-          segmentIndex % 2 === 0 ? "#fff" : "#fff"
+          segmentIndex % 2 === 0 ? "#fff" : "#f9f9f9"
         };">
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
-        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:25px" /> <br/> <span style="font-size:11px;">${fullCarrierName}</span></td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <td style="padding: 8px; border: 1px solid #000; color: #000;">
+        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:50px" /> <br/> ${fullCarrierName}</td>
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.departure.iataCode}</b><br />
             ${formatDate(segment.departure.at)}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.arrival.iataCode}</b><br />
             ${formatDate(segment.arrival.at)}
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${segment.carrierCode}&nbsp;${segment.number}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${
               submitBookingData.flightData.data[0].travelerPricings[0]
                 .fareDetailsBySegment[0].cabin || ""
             }
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           ${itinerary.duration
             ? itinerary.duration
                 .slice(2) // Remove "pt" prefix
@@ -855,14 +819,14 @@ app.post("/cancel-form", (req, res) => {
         <div style="overflow-x: auto;">
         <table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
           <thead>
-            <tr style="background-color: #cccccc8a; text-align:left;">
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Serial No.</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Traveller Type</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">First Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Middle Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Last Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Gender</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Date</th>
+            <tr style="background-color: #f1f1f1; text-align:left;">
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Serial No.</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Traveller Type</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">First Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Middle Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Last Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Gender</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -870,12 +834,12 @@ app.post("/cancel-form", (req, res) => {
               .map(
                 (key, index) =>
                   `<tr key=${key} style="text-align:left; background-color: ${
-                    index % 2 === 0 ? "#fff" : "#fff"
+                    index % 2 === 0 ? "#fff" : "#f9f9f9"
                   };">
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   index + 1
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   key.startsWith("ADULT")
                     ? "ADT"
                     : key.startsWith("CHILD")
@@ -884,31 +848,31 @@ app.post("/cancel-form", (req, res) => {
                     ? "INF"
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].firstName
                     ? userInformation[key].firstName.charAt(0).toUpperCase() +
                       userInformation[key].firstName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].middleName
                     ? userInformation[key].middleName.charAt(0).toUpperCase() +
                       userInformation[key].middleName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].lastName
                     ? userInformation[key].lastName.charAt(0).toUpperCase() +
                       userInformation[key].lastName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].gender
                     ? userInformation[key].gender.charAt(0).toUpperCase() +
                       userInformation[key].gender.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].date
                 }</td>
               </tr>`
@@ -930,30 +894,28 @@ app.post("/cancel-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
+    service: "gmail",
+    auth: {
+      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
+      pass: "putf rvsx tirx qrkc"
+    },
   });
 
 
   // Compose email
   const mailOptions = {
-    from: "support@cheapgoogleflights.com",
+    from: "mahtopankaj300@gmail.com",
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING IS CANCELLED-${submitBookingData.randomNumber}`,
-    bcc: 'support@cheapgoogleflights.com',
+    bcc: '',
     html: `
-    <div style="background: #fff; font-size: 14px; border: 1px solid #000; padding:0 15px;">
+    <div style="background: #fff; font-size: 14px;">
 		<div class="tem-section">
 			<div style="background-color: #fff; padding: 10px; text-align:left;">
 				<table width="100%" cellpadding="0" cellspacing="0">
 					<tr>
 						<td style="text-align: left; width: 50%;">
-							<img src="https://i.ibb.co/HnxGPL8/logo.png" alt="" style="width: 130px;">
+							<img src="https://www.farehold.com/media/images/logo.png" alt="" style="width: 130px;">
 						</td>
 						<td style="text-align: right; width: 50%; font-size: 16px;">
 							<b>Booking Reference # ${submitBookingData.randomNumber}</b>
@@ -962,8 +924,8 @@ app.post("/cancel-form", (req, res) => {
 				</table>
 			</div>
 
-			<div class="need" style="background: #343f55;text-align: right;">
-				<p style="color: #fff;font-size: 16px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+			<div class="need" style="background: #048c9b;text-align: right;">
+				<p style="color: #fff;font-size: 16px; padding:0.5rem">
 					Need help, Our 24x7 Toll Free Support: <a style="text-decoration: none;" ><b style="color:#fff;">${phoneNumberweb}</b></a> 
 				</p>
 			</div>
@@ -975,10 +937,10 @@ app.post("/cancel-form", (req, res) => {
 					If any query please contact our customer support at <a ><b style="color:#000;">${phoneNumberweb}</b></a> or send us an email at <a ><b style="color:#000;">${email}</b></a> and one of our travel expert will be pleased to assist you.In Such unlikely event, if your tickets cannot be processed for any reason you will be notified via email or by telephone and your payment will NOT be processed.
 				</p>
 			</div>
-			<div style="padding: 0rem 0.5rem; background: #343f55;">
-			<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
-          Travellers Details
+			<div style="padding: 0rem 0.5rem; background: #048c9b;">
+			<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
+          Traveler(s) Information
 					</p>
 				</div>
 			</div>
@@ -986,8 +948,8 @@ app.post("/cancel-form", (req, res) => {
 		</div>
 		<div class="col-12">
 			<div class="bg-secondary rounded h-100">
-				<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+				<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
 						Flight Details
 					</p>
 				</div>
@@ -996,13 +958,13 @@ app.post("/cancel-form", (req, res) => {
 
 						<table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
 							<thead>
-								<tr style="background-color: #cccccc8a;text-align:left; " >
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Airline</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Departure</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Arrival</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Flight Details</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Cabin</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Duration</th>
+								<tr style="background-color: #f1f1f1;text-align:left; " >
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Airline</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Departure</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Arrival</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Flight Details</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Class</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Duration</th>
 								</tr>
 							</thead>
 							${flightDataHTML}
@@ -1013,25 +975,25 @@ app.post("/cancel-form", (req, res) => {
 		</div>
     <div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Customer Contact
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${submitBookingData.emaiAndId.email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${submitBookingData.emaiAndId.phone}</a>
           </td>
         </tr>
@@ -1039,36 +1001,36 @@ app.post("/cancel-form", (req, res) => {
     </table>
   </div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Price Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
   <table style="width: 100%; border-collapse: collapse;">
-    <thead style="background-color: #cccccc8a">
+    <thead style="background-color: #f2f2f2;">
       
     </thead>
-    <tbody style="text-align:left; background:#fff;">
+    <tbody style="text-align:left;">
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Base Amount</th>
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Base Amount</th>
+        <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
           USD ${submitBookingData.fareDetails.travelerDetails[0].totalAmount}
         </td>
       </tr>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Main Cabin</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Main Cabin</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       ${submitBookingData.fareDetails.cabinAmount ? `USD ${submitBookingData.fareDetails.cabinAmount}` : "No"}
             </td>
       </tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.travelerDetails[0].taxAmount}
     </td>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Total Amount</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Total Amount</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.totalAmount}
     </td>
       </tr>
@@ -1077,8 +1039,8 @@ app.post("/cancel-form", (req, res) => {
   </table>
 </div>
 
-<div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+<div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Terms & Conditions
       </p>
     </div>
@@ -1092,37 +1054,37 @@ app.post("/cancel-form", (req, res) => {
     </ul>
     </p>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Contact Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Agency Name</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Agency Name</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${companyName}	
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${phoneNumberweb}</a>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+  <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Policy
       </p>
     </div>
@@ -1139,8 +1101,8 @@ app.post("/cancel-form", (req, res) => {
 In order to provide you with further protection, when certain transactions are determined to be high-risk by our systems, we will not process such transactions unless our credit card verification team has determined that it's safe to process them. In order to establish validity of such transactions, we may contact you or your bank.
 
     </p>
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Change/ Cancellation Policy
       </p>
     </div>
@@ -1187,28 +1149,28 @@ app.post("/succes-form", (req, res) => {
         const fullCarrierName = submitBookingData.flightData.dictionaries.carriers[carrierCode] || ''; 
         flightDataHTML += `
         <tr key="${segmentIndex}" style="text-align:left; background-color: ${
-          segmentIndex % 2 === 0 ? "#fff" : "#fff"
+          segmentIndex % 2 === 0 ? "#fff" : "#f9f9f9"
         };">
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
-        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:25px" /> <br/> <span style="font-size:11px;">${fullCarrierName}</span></td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <td style="padding: 8px; border: 1px solid #000; color: #000;">
+        <img src="https://cmsrepository.com/static/flights/flight/airlinelogo-png/${itinerary.segments[0].carrierCode.toLowerCase()}.png" style="width:50px" /> <br/> ${fullCarrierName}</td>
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.departure.iataCode}</b><br />
             ${formatDate(segment.departure.at)}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             <b>${segment.arrival.iataCode}</b><br />
             ${formatDate(segment.arrival.at)}
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${segment.carrierCode}&nbsp;${segment.number}<br />
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${
               submitBookingData.flightData.data[0].travelerPricings[0]
                 .fareDetailsBySegment[0].cabin || ""
             }
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           ${itinerary.duration
             ? itinerary.duration
                 .slice(2) // Remove "pt" prefix
@@ -1234,14 +1196,14 @@ app.post("/succes-form", (req, res) => {
         <div style="overflow-x: auto;">
         <table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
           <thead>
-            <tr style="background-color: #cccccc8a; text-align:left;">
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Serial No.</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Traveller Type</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">First Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Middle Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Last Name</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Gender</th>
-              <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Date</th>
+            <tr style="background-color: #f1f1f1; text-align:left;">
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Serial No.</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Traveller Type</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">First Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Middle Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Last Name</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Gender</th>
+              <th style="padding: 8px; border: 1px solid #000; color: #000;">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -1249,12 +1211,12 @@ app.post("/succes-form", (req, res) => {
               .map(
                 (key, index) =>
                   `<tr key=${key} style="text-align:left; background-color: ${
-                    index % 2 === 0 ? "#fff" : "#fff"
+                    index % 2 === 0 ? "#fff" : "#f9f9f9"
                   };">
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   index + 1
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   key.startsWith("ADULT")
                     ? "ADT"
                     : key.startsWith("CHILD")
@@ -1263,31 +1225,31 @@ app.post("/succes-form", (req, res) => {
                     ? "INF"
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].firstName
                     ? userInformation[key].firstName.charAt(0).toUpperCase() +
                       userInformation[key].firstName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].middleName
                     ? userInformation[key].middleName.charAt(0).toUpperCase() +
                       userInformation[key].middleName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].lastName
                     ? userInformation[key].lastName.charAt(0).toUpperCase() +
                       userInformation[key].lastName.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].gender
                     ? userInformation[key].gender.charAt(0).toUpperCase() +
                       userInformation[key].gender.slice(1)
                     : ""
                 }</td>
-                <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">${
+                <td style="padding: 8px; border: 1px solid #000; color: #000;">${
                   userInformation[key].date
                 }</td>
               </tr>`
@@ -1309,30 +1271,28 @@ app.post("/succes-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
+    service: "gmail",
+    auth: {
+      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
+      pass: "putf rvsx tirx qrkc"
+    },
   });
 
 
   // Compose email
   const mailOptions = {
-    from: "support@cheapgoogleflights.com",
+    from: "mahtopankaj300@gmail.com",
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING IS ISSUED-${submitBookingData.randomNumber}`,
-    bcc: 'support@cheapgoogleflights.com',
+    bcc: '',
     html: `
-    <div style="background: #fff; font-size: 14px; border: 1px solid #000; padding:0 15px;">
+    <div style="background: #fff; font-size: 14px;">
 		<div class="tem-section">
 			<div style="background-color: #fff; padding: 10px; text-align:left;">
 				<table width="100%" cellpadding="0" cellspacing="0">
 					<tr>
 						<td style="text-align: left; width: 50%;">
-							<img src="https://i.ibb.co/gDxZkKM/logo.png" alt="" style="width: 130px;">
+							<img src="https://www.${companyName}.com/media/images/logo.png" alt="" style="width: 130px;">
 						</td>
 						<td style="text-align: right; width: 50%; font-size: 16px;">
 							<b>Booking Reference # ${submitBookingData.randomNumber}</b>
@@ -1341,23 +1301,23 @@ app.post("/succes-form", (req, res) => {
 				</table>
 			</div>
 
-			<div class="need" style="background: #343f55;text-align: right;">
-				<p style="color: #fff;font-size: 16px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+			<div class="need" style="background: #048c9b;text-align: right;">
+				<p style="color: #fff;font-size: 16px; padding:0.5rem">
 					Need help, Our 24x7 Toll Free Support: <a style="text-decoration: none;" ><b style="color:#fff;">${phoneNumberweb}</b></a> 
 				</p>
 			</div>
 			<div class="book-para">
 				<p>
-					Your Booking is  <b>Issued</b> with booking reference # <b>${submitBookingData.randomNumber}</b>
+					Your Booking is  <b>SuccesFully</b> with booking reference # <b>${submitBookingData.randomNumber}</b>
 				</p>
 				<p>
 					If any query please contact our customer support at <a ><b style="color:#000;">${phoneNumberweb}</b></a> or send us an email at <a ><b style="color:#000;">${email}</b></a> and one of our travel expert will be pleased to assist you.In Such unlikely event, if your tickets cannot be processed for any reason you will be notified via email or by telephone and your payment will NOT be processed.
 				</p>
 			</div>
-			<div style="padding: 0rem 0.5rem; background: #343f55;">
-			<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
-          Travellers Details
+			<div style="padding: 0rem 0.5rem; background: #048c9b;">
+			<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
+          Traveler(s) Information
 					</p>
 				</div>
 			</div>
@@ -1365,8 +1325,8 @@ app.post("/succes-form", (req, res) => {
 		</div>
 		<div class="col-12">
 			<div class="bg-secondary rounded h-100">
-				<div class="need" style=";background: #343f55;text-align: left;">
-					<p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+				<div class="need" style=";background: #048c9b;text-align: left;">
+					<p style="color: #fff;font-size: 18px; padding:0.5rem">
 						Flight Details
 					</p>
 				</div>
@@ -1375,13 +1335,13 @@ app.post("/succes-form", (req, res) => {
 
 						<table width="100%" style="border-collapse: collapse; border: 1px solid #000; color: #000;">
 							<thead>
-								<tr style="background-color: #cccccc8a;text-align:left; " >
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Airline</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Departure</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Arrival</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Flight Details</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Cabin</th>
-									<th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Duration</th>
+								<tr style="background-color: #f1f1f1;text-align:left; " >
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Airline</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Departure</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Arrival</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Flight Details</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Class</th>
+									<th style="padding: 8px; border: 1px solid #000; color: #000;">Duration</th>
 								</tr>
 							</thead>
 							${flightDataHTML}
@@ -1392,25 +1352,25 @@ app.post("/succes-form", (req, res) => {
 		</div>
     <div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Customer Contact
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${submitBookingData.emaiAndId.email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${submitBookingData.emaiAndId.phone}</a>
           </td>
         </tr>
@@ -1418,36 +1378,36 @@ app.post("/succes-form", (req, res) => {
     </table>
   </div>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Price Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
   <table style="width: 100%; border-collapse: collapse;">
-    <thead style="background-color: #cccccc8a">
+    <thead style="background-color: #f2f2f2;">
       
     </thead>
-    <tbody style="text-align:left; background:#fff;">
+    <tbody style="text-align:left;">
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Base Amount</th>
-        <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Base Amount</th>
+        <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
           USD ${submitBookingData.fareDetails.travelerDetails[0].totalAmount}
         </td>
       </tr>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Main Cabin</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Main Cabin</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
         ${submitBookingData.fareDetails.cabinAmount ? `USD ${submitBookingData.fareDetails.cabinAmount}` : "No"}
       </td>
       </tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Taxes and Fees</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.travelerDetails[0].taxAmount}
     </td>
       <tr>
-      <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Total Amount</th>
-      <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
+      <th style="padding: 8px; border: 1px solid #000; color: #000;">Total Amount</th>
+      <td style="padding: 8px; border: 1px solid #000; color: #000;text-align:right;font-weight: bold;">
       USD ${submitBookingData.fareDetails.totalAmount}
     </td>
       </tr>
@@ -1456,8 +1416,8 @@ app.post("/succes-form", (req, res) => {
   </table>
 </div>
 
-<div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+<div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Terms & Conditions
       </p>
     </div>
@@ -1471,37 +1431,37 @@ app.post("/succes-form", (req, res) => {
     </ul>
     </p>
 
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Contact Info
       </p>
     </div>
     <div style="width: 100%; overflow-x: auto;">
     <table style="width: 100%; border-collapse: collapse;">
-      <thead style="background-color: #cccccc8a">
+      <thead style="background-color: #f2f2f2;">
         <tr style="text-align:left;">
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Agency Name</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Email Id	</th>
-          <th style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">Contact</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Agency Name</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Email Id	</th>
+          <th style="padding: 8px; border: 1px solid #000; color: #000;">Contact</th>
         </tr>
       </thead>
       <tbody>
-        <tr style="text-align:left;background:#fff;">
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+        <tr style="text-align:left;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
             ${companyName}	
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a  style="color:#000;" >${email}</a>
           </td>
-          <td style="padding: 8px; font-size: 14px; border: 1px solid #000; color: #000;">
+          <td style="padding: 8px; border: 1px solid #000; color: #000;">
           <a style="color:#000;" >${phoneNumberweb}</a>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+  <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Policy
       </p>
     </div>
@@ -1518,8 +1478,8 @@ app.post("/succes-form", (req, res) => {
 In order to provide you with further protection, when certain transactions are determined to be high-risk by our systems, we will not process such transactions unless our credit card verification team has determined that it's safe to process them. In order to establish validity of such transactions, we may contact you or your bank.
 
     </p>
-    <div class="need" style=";background: #343f55;text-align: left;">
-      <p style="color: #fff;font-size: 18px; padding: 2px  0.5rem; text-shadow: 1px 1px grey;  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;">
+    <div class="need" style=";background: #048c9b;text-align: left;">
+      <p style="color: #fff;font-size: 18px; padding:0.5rem">
       Change/ Cancellation Policy
       </p>
     </div>
@@ -1576,21 +1536,9 @@ app.get("/bookings/cancel", (req, res) => {
     });
 });
 
-app.get("/bookings/issue", (req, res) => {
-  Booking.find({ bookingColor: "#06a606ad" }) // Retrieve only bookings with bookingColor as "red"
-    .sort({ _id: -1 })
-    .then((data) => {
-      res.json(data);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).json({ error: "Failed to fetch data from MongoDB" });
-    });
-});
-
 
 app.get("/bookings/white", (req, res) => {
-  Booking.find({ $or: [{ bookingColor: "#dddddd" }, { bookingColor: "" }] }) // Retrieve bookings with bookingColor as "green" or empty
+  Booking.find({ $or: [{ bookingColor: "#06a606ad" }, { bookingColor: "" }] }) // Retrieve bookings with bookingColor as "green" or empty
     .sort({ _id: -1 })
     .then((data) => {
       res.json(data);
@@ -1602,62 +1550,33 @@ app.get("/bookings/white", (req, res) => {
 });
 
 
-// customer receipt admin check api
-app.get("/customer/:bookingID", (req, res) => {
-  const { bookingID } = req.params;
-
-  Booking.findById(bookingID)
-    .then((booking) => {
-      if (booking) {
-        res.json({
-          success: "Booking retrieved successfully",
-          data: booking,
-        });
-      } else {
-        res.status(404).json({ error: "Booking not found with the specified ID" });
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).json({ error: "Failed to retrieve booking data" });
-    });
-});
 
 
 
 
-
-
-
-
- 
 
 app.post('/send-email', (req, res) => {
-
+  const frontendemail = req.body;
+  console.log("email check data formdata", frontendemail);
   const { first_name, last_name, email, mobile_number, message } = req.body;
 
-  // Check if all required fields are present
   if (!first_name || !last_name || !email || !mobile_number || !message) {
     return res.status(400).send('All fields are required');
   }
+  // Setup nodemailer transporter
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
+      pass: "putf rvsx tirx qrkc"  // Replace with your Gmail password
+    }
+  });
 
-  // Setup nodemailer transporter with SMTP
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-    })
-  );
   // Setup email data
   const mailOptions = {
-    from: 'support@cheapgoogleflights.com',  // Sender email address (should be valid)
-    to: 'support@cheapgoogleflights.com',    // Recipient email address (update to the correct address)
-    subject: 'New Enquiry',
+    from: email,
+    to: 'mahtopankaj300@gmail.com',  // Replace with your Gmail address
+    subject: 'New Contact Form Submission',
     text: `First Name: ${first_name}\nLast Name: ${last_name}\nEmail: ${email}\nMobile Number: ${mobile_number}\n\nMessage:\n${message}`
   };
 
@@ -1665,42 +1584,19 @@ app.post('/send-email', (req, res) => {
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error(error);
-      res.status(500).send('Error sending ddmessage');
+      res.status(500).send('Error sending message');
     } else {
       console.log('Email sent: ' + info.response);
       res.send('Message sent successfully!');
     }
-  })
+  });
 });
 
 
 
 
-
-// const _dirname = path.dirname("");
-// const buildPath = path.join(__dirname, '../frontend/build');
-// app.use(express.static(buildPath));
-
-// app.get('/*', function(req, res) {
-//   const indexHtmlPath = path.join(__dirname, "../frontend/build/index.html");
-
-//   res.sendFile(indexHtmlPath, function (err) {
-//     if (err) {
-//       res.status(500).send(err);
-//     }
-//   });
-// });
-
-// default api
-
-app.get('/', (req,res)=>{
-  res.send({msg:"backend is working now"})
-})
-
 // // Use your booking routes
 // app.use('/booking', bookingRouter);
-
-const port = process.env.PORT || 8000;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);

@@ -571,8 +571,8 @@ app.post("/submit-form", (req, res) => {
 				<table width="100%" cellpadding="0" cellspacing="0">
 					<tr>
 						<td style="text-align: left; width: 50%;">
-							<img src="https://i.ibb.co/gDxZkKM/logo.png" alt="" style="width: 130px;">
-              //we have to change the image url here then remvoe this comment
+							<img src="https://i.ibb.co/CpGJt7B7/Group-4.png" alt="" style="width: 130px;">
+              
 						</td>
 						<td style="text-align: right; width: 50%; font-size: 16px;">
 							<b>Booking Reference # ${submitBookingData.randomNumber}</b>

@@ -1,9 +1,13 @@
 const express = require("express");
+require("dotenv").config();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const fileUpload = require("express-fileupload");
 const path = require("path"); // Add this line to import the 'path' module
 const nodemailer = require("nodemailer");
+const smtpHost = (process.env.SMTP_HOST || "").trim();
+const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
+const smtpSecure = smtpPort === 465;
 
 // const axios = require('axios');
 
@@ -434,10 +438,12 @@ app.post("/submit-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
     auth: {
-      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
-      pass: "putf rvsx tirx qrkc"
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD
     },
   });
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
@@ -456,7 +462,7 @@ app.post("/submit-form", (req, res) => {
 
   // Compose email
   const mailOptions = {
-    from: "mahtopankaj300@gmail.com",
+    from: process.env.SMTP_USERNAME,
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING REFERENCE # ${submitBookingData.randomNumber}`,
     bcc: '',
@@ -825,10 +831,12 @@ app.post("/cancel-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
     auth: {
-      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
-      pass: "putf rvsx tirx qrkc"
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD
     },
   });
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
@@ -847,7 +855,7 @@ app.post("/cancel-form", (req, res) => {
 
   // Compose email
   const mailOptions = {
-    from: "mahtopankaj300@gmail.com",
+    from: process.env.SMTP_USERNAME,
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING IS CANCELLED-${submitBookingData.randomNumber}`,
     bcc: '',
@@ -1214,10 +1222,12 @@ app.post("/succes-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
     auth: {
-      user: "mahtopankaj300@gmail.com", // Replace with your Gmail address
-      pass: "putf rvsx tirx qrkc"
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD
     },
   });
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
@@ -1236,7 +1246,7 @@ app.post("/succes-form", (req, res) => {
 
   // Compose email
   const mailOptions = {
-    from: "mahtopankaj300@gmail.com",
+    from: process.env.SMTP_USERNAME,
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING IS ISSUED-${submitBookingData.randomNumber}`,
     bcc: '',

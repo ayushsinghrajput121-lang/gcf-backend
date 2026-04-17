@@ -1,6 +1,10 @@
 const userModel = require('../models/user.js')
+require('dotenv').config();
 // const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer')
+const smtpHost = (process.env.SMTP_HOST || "").trim();
+const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
+const smtpSecure = smtpPort === 465;
 
 const bcrypt = require('bcrypt');
 
@@ -163,15 +167,13 @@ module.exports.sendotp = async (req, res) => {
       res.send({ code: 500, message: 'user not found' })
   }
 
-  let testAccount = await nodemailer.createTestAccount()
-
   let transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
-          user: testAccount.user,
-          pass: testAccount.pass
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_PASSWORD
       }
   })
 
@@ -180,7 +182,7 @@ module.exports.sendotp = async (req, res) => {
 
 
   let info = await transporter.sendMail({
-      from: 'mahtopankaj300@gmail.com',
+      from: process.env.SMTP_USERNAME,
       to: req.body.email, // list of receivers
       subject: "OTP", // Subject line
       text: String(_otp),

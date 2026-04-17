@@ -1,5 +1,5 @@
 const express = require('express');
-// require('dotenv').config();
+require('dotenv').config();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const {authenticateUser}=require("./controller/authentication.js")
@@ -10,6 +10,9 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 
 const smtpTransport = require('nodemailer-smtp-transport');
+const smtpHost = (process.env.SMTP_HOST || "").trim();
+const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
+const smtpSecure = smtpPort === 465;
 const Amadeus = require('amadeus');
 const { Airports, db } = require("./models/database");
 const amadeus = new Amadeus({
@@ -547,9 +550,9 @@ app.post("/submit-form", (req, res) => {
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport(
     smtpTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
         pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
@@ -930,9 +933,9 @@ app.post("/cancel-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+    host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
         pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
@@ -1309,9 +1312,9 @@ app.post("/succes-form", (req, res) => {
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+    host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
         pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
@@ -1644,9 +1647,9 @@ app.post('/send-email', (req, res) => {
   // Setup nodemailer transporter with SMTP
   const transporter = nodemailer.createTransport(
     smtpTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
         pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password

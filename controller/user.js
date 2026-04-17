@@ -71,36 +71,66 @@ module.exports.login = async (req, res) => {
   try {
     const { name, password } = req.body;
 
-    // Find a user by name in the userModel
+    // ✅ Super Admin login via .env
+    if (
+      name === process.env.SUPERADMIN_USERNAME &&
+      password === process.env.SUPERADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(
+        { userId: "superadmin", name: "superadmin", role: "superadmin" },
+        secretKey,
+        { expiresIn: "1h" }
+      );
+
+      return res.status(200).json({
+        code: 200,
+        message: "Super Admin login successful",
+        token,
+        name: "superadmin",
+        role: "superadmin",
+        email: "superadmin@system.local",
+      });
+    }
+
+    // 🔍 Find user in DB
     const user = await userModel.findOne({ name });
 
     if (!user) {
-      return res.status(404).json({ code: 404, message: 'User Not Found' });
+      return res.status(404).json({ code: 404, message: "User Not Found" });
     }
 
-    // Compare the provided password with the hashed password in the database
+    // 🔐 Compare password
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      return res.status(404).json({ code: 404, message: 'Password Wrong' });
+      return res.status(401).json({ code: 401, message: "Password Wrong" });
     }
 
-    // Passwords match, generate JWT token
-    const token = jwt.sign({ userId: user._id, name: user.name }, secretKey, { expiresIn: '1h' });
+    // 🎟️ Generate token
+    const token = jwt.sign(
+      { userId: user._id, name: user.name, role: user.role },
+      secretKey,
+      { expiresIn: "1h" }
+    );
 
     return res.status(200).json({
       code: 200,
-      message: 'Login successful',
+      message: "Login successful",
       token,
       name: user.name,
       role: user.role,
       email: user.email,
-      // password: user.password, 
     });
   } catch (error) {
-    return res.status(500).json({ code: 500, message: 'Server Error', error: error.message });
+    return res.status(500).json({
+      code: 500,
+      message: "Server Error",
+      error: error.message,
+    });
   }
 };
+
+
 
 
 

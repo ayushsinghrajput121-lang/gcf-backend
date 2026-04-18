@@ -5,6 +5,22 @@ const nodemailer = require('nodemailer')
 const smtpHost = (process.env.SMTP_HOST || "").trim();
 const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
 const smtpSecure = smtpPort === 465;
+const createSmtpTransport = () =>
+  nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_PASSWORD
+      },
+      tls: {
+          servername: smtpHost
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000
+  });
 
 const bcrypt = require('bcrypt');
 
@@ -167,15 +183,7 @@ module.exports.sendotp = async (req, res) => {
       res.send({ code: 500, message: 'user not found' })
   }
 
-  let transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-          user: process.env.SMTP_USERNAME,
-          pass: process.env.SMTP_PASSWORD
-      }
-  })
+  let transporter = createSmtpTransport()
 
 
   

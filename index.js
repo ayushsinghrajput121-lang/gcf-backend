@@ -8,11 +8,77 @@ app.use(bodyParser.json());
 const fileUpload = require("express-fileupload");
 const path = require("path");
 const nodemailer = require("nodemailer");
-
-const smtpTransport = require('nodemailer-smtp-transport');
 const smtpHost = (process.env.SMTP_HOST || "").trim();
 const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
+const smtpUser = (process.env.SMTP_USERNAME || "").trim();
+const smtpPass = (process.env.SMTP_PASSWORD || "").trim();
 const smtpSecure = smtpPort === 465;
+const smtpFallbackPort = smtpPort === 465 ? 587 : 465;
+const smtpPortsToTry = [...new Set([smtpPort, smtpFallbackPort])];
+const createSmtpTransport = (port = smtpPort) =>
+  nodemailer.createTransport({
+    host: smtpHost,
+    port,
+    secure: port === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    tls: {
+      servername: smtpHost,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+  });
+const smtpDebugEnabled = process.env.SMTP_DEBUG === "true";
+if (!smtpHost || !smtpUser || !smtpPass) {
+  console.error("SMTP configuration is incomplete. Check SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD.");
+}
+const smtpErrorPayload = (error) => ({
+  message: "Unable to send email",
+  smtp: {
+    code: error?.code || null,
+    command: error?.command || null,
+    responseCode: error?.responseCode || null,
+    response: error?.response || null,
+  },
+});
+const verifySmtpPorts = async () => {
+  const results = [];
+
+  for (const port of smtpPortsToTry) {
+    try {
+      const transporter = createSmtpTransport(port);
+      await transporter.verify();
+      results.push({ port, ok: true, secure: port === 465 });
+    } catch (error) {
+      results.push({
+        port,
+        ok: false,
+        secure: port === 465,
+        ...smtpErrorPayload(error).smtp,
+      });
+    }
+  }
+
+  return results;
+};
+const sendMailWithFallback = async (mailOptions) => {
+  let lastError;
+
+  for (const port of smtpPortsToTry) {
+    try {
+      const transporter = createSmtpTransport(port);
+      return await transporter.sendMail(mailOptions);
+    } catch (error) {
+      lastError = error;
+      console.error(`SMTP failed on port ${port}:`, smtpErrorPayload(error));
+    }
+  }
+
+  throw lastError;
+};
 const Amadeus = require('amadeus');
 const { Airports, db } = require("./models/database");
 const amadeus = new Amadeus({
@@ -50,6 +116,32 @@ app.post('/signup', UserController.signup);
 app.post('/login', UserController.login);
 app.post('/send-otp', UserController.sendotp);
 app.post('/submit-otp', UserController.submitotp);    
+
+app.get('/smtp-health', async (req, res) => {
+  const envSummary = {
+    host: smtpHost || null,
+    user: smtpUser || null,
+    hasPassword: Boolean(smtpPass),
+    configuredPort: smtpPort,
+    fallbackPorts: smtpPortsToTry,
+  };
+
+  try {
+    const results = await verifySmtpPorts();
+    const hasSuccess = results.some((item) => item.ok);
+    return res.status(hasSuccess ? 200 : 500).json({
+      ok: hasSuccess,
+      env: envSummary,
+      checks: results,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      env: envSummary,
+      error: smtpErrorPayload(error),
+    });
+  }
+});
 
 app.get('/users', UserController.getAllUsers);
 app.put('/users/:id', UserController.updateUserById); // Route to update a user by ID
@@ -548,22 +640,9 @@ app.post("/submit-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-    })
-  );
-
-
   // Compose email
   const mailOptions = {
-    from: "support@cheapgoogleflights.com",
+    from: smtpUser,
     to: submitBookingData.emaiAndId.email, // Replace with the recipient's email address
     subject: `BOOKING REFERENCE # ${submitBookingData.randomNumber}`,
     bcc: 'support@cheapgoogleflights.com',
@@ -780,15 +859,18 @@ In order to provide you with further protection, when certain transactions are d
   };
 
   // Send email
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      res.status(500).send("Error: Unable to send email");
-    } else {
+  sendMailWithFallback(mailOptions)
+    .then((info) => {
       console.log("Email sent: " + info.response);
       res.status(200).send("Email sent successfully");
-    }
-  })
+    })
+    .catch((error) => {
+      console.error("SMTP send failed:", smtpErrorPayload(error));
+      if (smtpDebugEnabled) {
+        return res.status(500).json(smtpErrorPayload(error));
+      }
+      res.status(500).send("Error: Unable to send email");
+    });
 });
 
 
@@ -932,15 +1014,7 @@ app.post("/cancel-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-  });
+  const transporter = createSmtpTransport();
 
 
   // Compose email
@@ -1311,15 +1385,7 @@ app.post("/succes-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-  });
+  const transporter = createSmtpTransport();
 
 
   // Compose email
@@ -1645,17 +1711,7 @@ app.post('/send-email', (req, res) => {
   }
 
   // Setup nodemailer transporter with SMTP
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: {
-        user: process.env.SMTP_USERNAME,  // Replace with your SMTP username
-        pass: process.env.SMTP_PASSWORD   // Replace with your SMTP password
-      }
-    })
-  );
+  const transporter = createSmtpTransport();
   // Setup email data
   const mailOptions = {
     from: 'support@cheapgoogleflights.com',  // Sender email address (should be valid)

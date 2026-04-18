@@ -8,6 +8,22 @@ const nodemailer = require("nodemailer");
 const smtpHost = (process.env.SMTP_HOST || "").trim();
 const smtpPort = Number((process.env.SMTP_PORT || "465").trim());
 const smtpSecure = smtpPort === 465;
+const createSmtpTransport = () =>
+  nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: {
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    tls: {
+      servername: smtpHost,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+  });
 
 // const axios = require('axios');
 
@@ -437,15 +453,7 @@ app.post("/submit-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: {
-      user: process.env.SMTP_USERNAME,
-      pass: process.env.SMTP_PASSWORD
-    },
-  });
+  const transporter = createSmtpTransport();
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
       // pass: "wvxf sqlj hxuw dqhe",
 
@@ -830,15 +838,7 @@ app.post("/cancel-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: {
-      user: process.env.SMTP_USERNAME,
-      pass: process.env.SMTP_PASSWORD
-    },
-  });
+  const transporter = createSmtpTransport();
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
       // pass: "wvxf sqlj hxuw dqhe",
 
@@ -1221,15 +1221,7 @@ app.post("/succes-form", (req, res) => {
   );
 
   // //Configure Nodemailer transporter (provide your Gmail credentials)
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    auth: {
-      user: process.env.SMTP_USERNAME,
-      pass: process.env.SMTP_PASSWORD
-    },
-  });
+  const transporter = createSmtpTransport();
    // user: "support@cheapgoogleflights.com", // Replace with your Gmail address
       // pass: "wvxf sqlj hxuw dqhe",
 
